@@ -41,7 +41,7 @@ public class Router {
 		public String controllerMethodName;
 	}
 
-	private RouteContext getCtx() {
+	private RouteContext getContext() {
 		return ctx;
 	}
 
@@ -57,12 +57,21 @@ public class Router {
 	}
 
 	private enum HttpMethod {
-		GET, POST, PUT, DELETE, TRACE
+		// http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
+		OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, CONNECT
 	}
 
 	public class HttpMethodBuilder {
+		public HandlerClassBuilder whenOPTIONS() {
+			return when(HttpMethod.OPTIONS);
+		}
+
 		public HandlerClassBuilder whenGET() {
 			return when(HttpMethod.GET);
+		}
+
+		public HandlerClassBuilder whenHEAD() {
+			return when(HttpMethod.HEAD);
 		}
 
 		public HandlerClassBuilder whenPOST() {
@@ -81,26 +90,73 @@ public class Router {
 			return when(HttpMethod.TRACE);
 		}
 
+		public HandlerClassBuilder whenCONNECT() {
+			return when(HttpMethod.CONNECT);
+		}
+
 		private HandlerClassBuilder when(HttpMethod httpMethod) {
 			return when(httpMethod.name());
 		}
 
 		public HandlerClassBuilder when(String httpMethod) {
-			getCtx().httpMethod = httpMethod;
+			getContext().httpMethod = httpMethod;
 			return handlerClassBuilder;
 		}
 	}
 
+	public HandlerClassBuilder whenOPTIONS() {
+		return when(HttpMethod.OPTIONS);
+	}
+
+	public HandlerClassBuilder whenGET() {
+		return when(HttpMethod.GET);
+	}
+
+	public HandlerClassBuilder whenHEAD() {
+		return when(HttpMethod.HEAD);
+	}
+
+	public HandlerClassBuilder whenPOST() {
+		return when(HttpMethod.POST);
+	}
+
+	public HandlerClassBuilder whenPUT() {
+		return when(HttpMethod.PUT);
+	}
+
+	public HandlerClassBuilder whenDELETE() {
+		return when(HttpMethod.DELETE);
+	}
+
+	public HandlerClassBuilder whenTRACE() {
+		return when(HttpMethod.TRACE);
+	}
+
+	public HandlerClassBuilder whenCONNECT() {
+		return when(HttpMethod.CONNECT);
+	}
+
+	private HandlerClassBuilder when(HttpMethod httpMethod) {
+		return when(httpMethod.name());
+	}
+
+	public HandlerClassBuilder when(String httpMethod) {
+		if (getContext() == null) {
+			throw new RuntimeException("Route context not initialized");
+		}
+		return httpMethodBuilder.when(httpMethod);
+	}
+
 	public class HandlerClassBuilder {
 		public HandlerMethodBuilder handleIn(Class<?> controllerClass) {
-			getCtx().controllerClass = controllerClass;
+			getContext().controllerClass = controllerClass;
 			return handlerMethodBuilder;
 		}
 	}
 
 	public class HandlerMethodBuilder {
 		public Router by(String methodName) {
-			getCtx().controllerMethodName = methodName;
+			getContext().controllerMethodName = methodName;
 			return completeChain();
 		}
 	}

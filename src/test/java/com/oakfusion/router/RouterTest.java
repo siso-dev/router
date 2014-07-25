@@ -76,7 +76,6 @@ public class RouterTest {
 
 		// then
 		Route route = router.getRouteFor("GET", URI_TO_RESOURCE);
-		assertThat(route).isNotNull();
 		assertThat(route.getHttpMethod()).isEqualTo("GET");
 		assertThat(route.getUri()).isEqualTo(URI_TO_RESOURCE);
 	}
@@ -90,4 +89,47 @@ public class RouterTest {
 		// when
 		router.route(URI_TO_RESOURCE).whenGET().handleIn(SampleController.class).by(NON_EXISTING_METHOD_NAME);
 	}
+
+	@Test
+	public void should_build_next_route_to_the_same_resource_after_competing_first_one() {
+		// when
+		router.route(URI_TO_RESOURCE)
+				.whenGET().handleIn(SampleController.class).by(METHOD_NAME)
+				.whenPUT().handleIn(SampleController.class).by(METHOD_NAME);
+
+		// then
+		Route route = router.getRouteFor("GET", URI_TO_RESOURCE);
+		assertThat(route.getHttpMethod()).isEqualTo("GET");
+		assertThat(route.getUri()).isEqualTo(URI_TO_RESOURCE);
+		route = router.getRouteFor("PUT", URI_TO_RESOURCE);
+		assertThat(route.getHttpMethod()).isEqualTo("PUT");
+		assertThat(route.getUri()).isEqualTo(URI_TO_RESOURCE);
+	}
+
+	@Test
+	public void should_build_next_route_to_different_resource_after_competing_first_one() {
+		// when
+		router
+			.route("/u1").whenGET().handleIn(SampleController.class).by(METHOD_NAME)
+			.route("/u2").whenPUT().handleIn(SampleController.class).by(METHOD_NAME);
+
+		// then
+		Route route = router.getRouteFor("GET", "/u1");
+		assertThat(route.getHttpMethod()).isEqualTo("GET");
+		assertThat(route.getUri()).isEqualTo("/u1");
+		route = router.getRouteFor("PUT", "/u2");
+		assertThat(route.getHttpMethod()).isEqualTo("PUT");
+		assertThat(route.getUri()).isEqualTo("/u2");
+	}
+
+	@Test
+	public void should_not_allow_to_invoke_http_method_builder_before_route_specification() {
+		// given
+		thrown.expect(RuntimeException.class);
+		thrown.expectMessage("Route context not initialized");
+
+		// when
+		router.whenGET();
+	}
+
 }
