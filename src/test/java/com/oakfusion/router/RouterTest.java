@@ -1,6 +1,8 @@
 package com.oakfusion.router;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,8 +11,12 @@ public class RouterTest {
 	public static final String URI_TO_RESOURCE = "/uri/to/resource";
 	public static final String CUSTOM_HTTP_METHOD = "CUSTOM_HTTP_METHOD";
 	public static final String METHOD_NAME = "simpleCall";
+	public static final String NON_EXISTING_METHOD_NAME = "nem";
 
 	private Router router = new Router();
+
+	@Rule
+	public ExpectedException thrown= ExpectedException.none();
 
 	@Test
 	public void should_context_not_be_initialized() {
@@ -73,5 +79,15 @@ public class RouterTest {
 		assertThat(route).isNotNull();
 		assertThat(route.getHttpMethod()).isEqualTo("GET");
 		assertThat(route.getUri()).isEqualTo(URI_TO_RESOURCE);
+	}
+
+	@Test
+	public void should_throw_when_invalid_handler_method_specified() {
+		// given
+		thrown.expect(RuntimeException.class);
+		thrown.expectMessage(NON_EXISTING_METHOD_NAME);
+
+		// when
+		router.route(URI_TO_RESOURCE).whenGET().handleIn(SampleController.class).by(NON_EXISTING_METHOD_NAME);
 	}
 }
